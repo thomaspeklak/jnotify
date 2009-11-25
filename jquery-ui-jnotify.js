@@ -5,18 +5,34 @@
       this.notification_prototype = this.options.notification.prototype;
       this.notification_prototype
         .bind('click', function(){$(this).trigger('close')})
-        .bind('close', this.options.notification._close)
-        .bind('_close', this.options.notification.close)
-        .bind('before-close', this.options.notification['before-close'])
-        .bind('after-close', this.options.notification['after-close'])
+        .bind('close', this.options.notification.close)
         .bind('autohide', this.options.notification.autohide)
+        .bind('mouseover', function(){$(this).stop().trigger('autohide')})
         .data('options', this.options)
         ;
       this.element
         .bind('before-create', this.options.notification['before-create'])
-        .bind('after-create', this.options.notification['after-create'])
+        .bind('after-delete', this.options.notification['after-delete'])
+        .addClass( "ui-notify" 
+          + " ui-widget"
+          + " ui-widget-content");
       
     },
+    
+    destroy: function(){
+      this.element
+        .removeClass( "ui-notify" 
+          + " ui-widget"
+          + " ui-widget-content" )
+        .unbind('before-create')
+        .unbind('after-delete')
+        .unbind('notify');
+        
+      $.widget.prototype.destroy.apply(this, arguments);
+      
+      return this;
+    },
+    
     _send: function(type, message, options) {
       log('type: ' + type + ' message ' + message + ' options ' + options );
       this.element
@@ -40,18 +56,17 @@
       duration: 5000,
       easing : 'linear',
       notification : {
-        prototype : $('<div class="ui-notification"></div>'),
+        prototype : $('<div></div>').addClass( "ui-notification" 
+          + " ui-widget"
+          + " ui-widget-content"),
         _close : function(){
-          $(this)
-            .trigger('before-close')
-            .trigger('_close')
-            .trigger('after-close');
+          $(this).data('options').notification.close();
+          $(this.parentNode).trigger('after-delete');
+
         },
-        close : function(){$(this).hide()},
+        close: function(){$(this).animate({height:0,opacity:0},1000, function(){$(this).remove()})},
         'before-create' : function(){},
-        'after-create' : function(){},
-        'before-close' : function(){},
-        'after-close' : function(){},
+        'after-delete' : function(){},
         autohide : function(){
           setTimeout(
             (function($this){ 
